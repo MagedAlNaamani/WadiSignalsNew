@@ -1,18 +1,19 @@
 package com.wadi.wadisignals;
 
-import android.content.Context;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -37,9 +38,18 @@ public class DirectionMap extends FragmentActivity {
     GoogleMap map;
     ArrayList<LatLng> markerPoints;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_direction_map);
+
+
+        // Creates an Intent that will show Oman Map as first show
+//        Uri gmmIntentUri = Uri.parse("geo:21.524933, 56.231296?z=5.9");
+//        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+//        mapIntent.setPackage("com.google.android.apps.maps");
+//        startActivity(mapIntent);
+
 
         // Initializing
         markerPoints = new ArrayList<LatLng>();
@@ -55,14 +65,25 @@ public class DirectionMap extends FragmentActivity {
             // Enable MyLocation Button in the Map
             map.setMyLocationEnabled(true);
 
+            //move camera to Oman Map
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(
+                    new LatLng(21.524933, 55.90000)).zoom(5).build();
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+            //set trafic to true
+            map.setTrafficEnabled(true);
+
+            map.getUiSettings().setMyLocationButtonEnabled(false);
+            map.getUiSettings().setZoomGesturesEnabled(false);
+
             // Setting onclick event listener for the map
-            map.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-
+            map.setOnMapClickListener(new GoogleMap.OnMapClickListener()
+            {
                 @Override
-                public void onMapClick(LatLng point) {
-
+                public void onMapClick(LatLng point)
+                {
                     // Already two locations
-                    if(markerPoints.size()>1){
+                    if (markerPoints.size() > 1) {
                         markerPoints.clear();
                         map.clear();
                     }
@@ -80,9 +101,9 @@ public class DirectionMap extends FragmentActivity {
                      * For the start location, the color of marker is GREEN and
                      * for the end location, the color of marker is RED.
                      */
-                    if(markerPoints.size()==1){
+                    if (markerPoints.size() == 1) {
                         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
-                    }else if(markerPoints.size()==2){
+                    } else if (markerPoints.size() == 2) {
                         options.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                     }
 
@@ -90,7 +111,7 @@ public class DirectionMap extends FragmentActivity {
                     map.addMarker(options);
 
                     // Checks, whether start and end locations are captured
-                    if(markerPoints.size() >= 2){
+                    if (markerPoints.size() >= 2) {
                         LatLng origin = markerPoints.get(0);
                         LatLng dest = markerPoints.get(1);
 
@@ -107,8 +128,8 @@ public class DirectionMap extends FragmentActivity {
         }
     }
 
-    private String getDirectionsUrl(LatLng origin,LatLng dest){
-
+    private String getDirectionsUrl(LatLng origin,LatLng dest)
+    {
         // Origin of route
         String str_origin = "origin="+origin.latitude+","+origin.longitude;
 
@@ -130,7 +151,8 @@ public class DirectionMap extends FragmentActivity {
         return url;
     }
     /** A method to download json data from url */
-    private String downloadUrl(String strUrl) throws IOException {
+    private String downloadUrl(String strUrl) throws IOException
+    {
         String data = "";
         InputStream iStream = null;
         HttpURLConnection urlConnection = null;
@@ -169,7 +191,8 @@ public class DirectionMap extends FragmentActivity {
     }
 
     // Fetches data from url passed
-    private class DownloadTask extends AsyncTask<String, Void, String> {
+    private class DownloadTask extends AsyncTask<String, Void, String>
+    {
 
         // Downloading data in non-ui thread
         @Override
@@ -201,7 +224,8 @@ public class DirectionMap extends FragmentActivity {
     }
 
     /** A class to parse the Google Places in JSON format */
-    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> >{
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String,String>>> >
+    {
 
         // Parsing the data in non-ui thread
         @Override
@@ -269,6 +293,18 @@ public class DirectionMap extends FragmentActivity {
 
                     // Drawing polyline in the Google Map for the i-th route
                     map.addPolyline(lineOptions);
+
+
+
+                    // Instantiates a new CircleOptions object and defines the center and radius
+                    CircleOptions circleOptions = new CircleOptions()
+                            .center(new LatLng(22.9378, 57.30763))
+                            .radius(1000)
+                            .zIndex(12);// In meters
+
+                    // Get back the mutable Circle
+                    Circle circle = map.addCircle(circleOptions);
+
                 }
 
             }catch (Exception ex)
@@ -278,18 +314,4 @@ public class DirectionMap extends FragmentActivity {
 
             }
         }}
-
-    //check internet connection
-    public static boolean isNetworkStatusAvialable (Context context) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager != null)
-        {
-            NetworkInfo netInfos = connectivityManager.getActiveNetworkInfo();
-            if(netInfos != null)
-            {
-                return netInfos.isConnected();
-            }
-        }
-        return false;
-    }
 }
